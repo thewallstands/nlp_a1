@@ -14,6 +14,7 @@ import pandas
 import string
 import math
 import numpy
+import json
 
 def prep(input):
     """
@@ -66,25 +67,42 @@ def ngrams(input, n, punc):
         output[g] += 1 # count how many time n-gram tokens appears
     return output
 
-def unknown(dic, k):
+def unknown(str, dic, k):
     """
-    Returns: a new dictionary counts all the words appearing less than k time as
+    Returns: a new word string replaces all the words appearing less than k time as
     <unk> token and count the total times of <unk>.
 
     Run a loop, for all index in the original dictioanry with value<=k will be counted
     into <unk> in the new dictioanry
 
-    Parameter dic: original dictioanry
+    parameter str: original string
+    Parameter dic: original dictioanry as reference
     Parameter k: threshold for <unk>
     """
-    newdic={"<unk>": 0}
-    for key in dic:
-        if (dic[key]<=k):
-            newdic["<unk>"] +=1
+    input= str.split(" ") # get the tokens
+    input_nopunc=[]
+    output=[]
+    for element in input:
+        if (element not in string.punctuation): # we hence only exclude total punctuations
+            input_nopunc.append(element.replace('\n','')) # This is to remove lines in text
+    for key in input_nopunc:
+        if (key not in dic):
+            output.append("<unk>")
         else:
-            newdic.setdefault(key, dic[key])
-    return newdic
+            if ((dic[key]<=k)):
+                output.append("<unk>")
+            else:
+                output.append(key)
+    g=" ".join(output)
+    return g
 
+def save_model(newdic, file):
+    """
+    Returns: generate a file containing file information.
+    """
+    fileName = file+ ".json"
+    with open(fileName, 'w') as fp:
+        json.dump(newdic, fp)
 
 def bismooth(dic1, dic2):
     """
@@ -133,9 +151,9 @@ def generator(input, dicn, dic1, n):
         if (element in dic1): # which means it is a knwon word
             condition_mod= element
         else:
-            condition_mod= <unk>
+            condition_mod= "<unk>"
     for key in dic1:
-        if (key != "<unk>")
+        if (key != "<unk>"):
             p_unk= dicn[condition_mod+ "<unk>"] # This step removes <unk> probability from mass
             prob += dicn[condition_mod+ key]/(1-p_unk) # because we cannot generate an unknown word
             if (prob>rand):
@@ -157,10 +175,55 @@ def perplexity(dictest, dicuse):
     tokens=0
     for key in dictest:
         if key in dicuse:
-
             a += dictest[key]* math.log(dicuse[key])
             tokens += dictest[key]
         else:
             print(key+'\n')
     output= math.exp(1/tokens * (-a) )
     return output
+
+
+def train(txt1, txt2, k):
+    """
+    return: a trained unigram dictionary.
+
+    Merge the steps from raw data to collected dictionary.
+    parameter txt1: raw data (training)
+    parameter txt2: raw data (development)
+    parameter k: test bi/unigram
+    """
+    name=txt1
+    txt1=r"C:\Users/13695\Documents\Nature_language_processing/a1/"+txt1+".txt"
+    txt2=r"C:\Users/13695\Documents\Nature_language_processing/a1/"+txt2+".txt"
+    with open(txt1, 'r', encoding='utf-8') as file1:
+        str1= file1.read()
+    with open(txt2, 'r', encoding='utf-8') as file2:
+        str2= file2.read()
+    # First leaning
+    dict_uni= ngrammodel.ngrams(str1, 1, 0)
+    # Replace unknown in original sentence
+    new_str= ngrammodel.unknown(str1, dict_uni, 1)
+    test_str= ngrammodel.unknown(str2, dict_uni, 1)
+    # Learn n-gram again using unknown
+        # training learining
+    dict_uni_unk= ngrammodel.ngrams(new_str, 1, 0)
+    dict_bi_unk= ngrammodel.ngrams(new_str, 2, 0)
+        # testing learning
+    dict_uni_unk_test= ngrammodel.ngrams(test_str, 1, 0)
+    dict_bi_unk_test= ngrammodel.ngrams(test_str, 2, 0)
+        # training smoothing
+    dict_bi_smooth= ngrammodel.bismooth(dict_bi_unk, dict_uni_unk)
+
+    ngrammodel.save_model(dict_uni, "dic_uni_known_"+ name[-5:])
+    ngrammodel.save_model(dict_uni_unk, "dic_uni_unknown_"+ name[-5:])
+    ngrammodel.save_model(dict_bi_unk, "dic_bi_unknown_"+ name[-5:])
+    ngrammodel.save_model(dict_bi_smooth, "dic_bi_unknown_smooth_"+ name[-5:])
+
+
+    if (k==2):
+    # Perplexity testing: bigram
+        perplexity= ngrammodel.perplexity(dict_bi_unk_test, dict_bi_smooth)
+    # Perplexity testing: unigram
+    else:
+        perplexity= ngrammodel.perplexity(dict_uni_unk_test, dict_uni_unk)
+    return perplexity

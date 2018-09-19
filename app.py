@@ -8,10 +8,10 @@ Author: Tianli Xia
 Date:   Sep 11th, 2018
 """
 
-import introcs
+
 import ngrammodel
 import string
-
+import io
 
 file_trump_train = (r"C:\Users/13695\Documents\Nature_language_processing/a1/train/trump.txt")
 file_obama_train = (r"C:\Users/13695\Documents\Nature_language_processing/a1/train/obama.txt")
@@ -27,9 +27,9 @@ for txt1,txt2 in [r"train/trump",r"train/obama"],[r"development/trump",r"develop
     txt1=r"C:\Users/13695\Documents\Nature_language_processing/a1/"+txt1+".txt"
     txt2=r"C:\Users/13695\Documents\Nature_language_processing/a1/"+txt2+".txt"
 
-    with open(txt1, 'r', encoding='utf-8') as file1:
+    with io.open(txt1, 'r', encoding='utf-8') as file1:
         str1= file1.read()
-    with open(txt2, 'r', encoding='utf-8') as file2:
+    with io.open(txt2, 'r', encoding='utf-8') as file2:
         str2= file2.read()
     # First leaning
     dict_uni= ngrammodel.ngrams(str1, 1, 0)

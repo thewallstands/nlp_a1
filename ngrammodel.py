@@ -104,7 +104,7 @@ def save_model(newdic, file):
     with open(fileName, 'w') as fp:
         json.dump(newdic, fp)
 
-def bismooth(dic1, dic2):
+def bismooth(dic1, dic2, k):
     """
     Returns: a smoothed dictionary containg all the probabilities for words appearing in
     the trained corpus.
@@ -117,6 +117,7 @@ def bismooth(dic1, dic2):
 
     Parameter dic1: trained n-gram dictionary
     Parameter dic2: trained 1-gram dictionary
+    parameter k: smoothing constant
 
     """
     output={}
@@ -124,7 +125,7 @@ def bismooth(dic1, dic2):
     for key1 in dic2:
         for key2 in dic2: # Bigrams, hence loop twice
             entry=key1 +' '+ key2
-            output.setdefault(entry, 1/(number+ dic2[key1])) # add one for all bigrams
+            output.setdefault(entry, k/(number+ dic2[key1])) # add one for all bigrams
             if entry in dic1: # if appearing as bigrams, add up original counts
                 output[entry] += (dic1[entry])/(number+ dic2[key1])
     return output
@@ -183,7 +184,7 @@ def perplexity(dictest, dicuse):
     return output
 
 
-def train(txt1, txt2, k):
+def train(txt1, txt2, k, n=1):
     """
     return: a trained unigram dictionary.
 
@@ -191,6 +192,7 @@ def train(txt1, txt2, k):
     parameter txt1: raw data (training)
     parameter txt2: raw data (development)
     parameter k: test bi/unigram
+    parameter n: smoothing parameter/ hyper parameter
     """
     name=txt1
     txt1=r"C:\Users/13695\Documents\Nature_language_processing/a1/"+txt1+".txt"
@@ -212,12 +214,12 @@ def train(txt1, txt2, k):
     dict_uni_unk_test= ngrammodel.ngrams(test_str, 1, 0)
     dict_bi_unk_test= ngrammodel.ngrams(test_str, 2, 0)
         # training smoothing
-    dict_bi_smooth= ngrammodel.bismooth(dict_bi_unk, dict_uni_unk)
+    dict_bi_smooth= ngrammodel.bismooth(dict_bi_unk, dict_uni_unk, n)
 
     ngrammodel.save_model(dict_uni, "dic_uni_known_"+ name[-5:])
     ngrammodel.save_model(dict_uni_unk, "dic_uni_unknown_"+ name[-5:])
-    ngrammodel.save_model(dict_bi_unk, "dic_bi_unknown_"+ name[-5:])
-    ngrammodel.save_model(dict_bi_smooth, "dic_bi_unknown_smooth_"+ name[-5:])
+    #ngrammodel.save_model(dict_bi_unk, "dic_bi_unknown_"+ name[-5:])
+    #ngrammodel.save_model(dict_bi_smooth, "dic_bi_unknown_smooth_"+ name[-5:])
 
 
     if (k==2):
